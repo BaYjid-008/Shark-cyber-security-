@@ -1,53 +1,54 @@
 const express = require("express");
 const multer = require("multer");
-const nodemailer = require("nodemailer");
-const cors = require("cors");
+const fetch = require("node-fetch"); // npm install node-fetch@2
 const fs = require("fs");
+const FormData = require("form-data"); // npm install form-data
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
-app.use(cors());
-app.use(express.static("."));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static("."));
+
+// ✅ Your Telegram Bot Token
+const BOT_TOKEN = "8472395100:AAEBP0g0ZsardCH2GO-FDs2TW1u9AafCPpw";
+
+// ✅ Your personal Chat ID
+const CHAT_ID = "6313533050";
 
 app.post("/send", upload.single("photo"), async (req, res) => {
   const { name, age, phone, email } = req.body;
-  const photoPath = req.file?.path;
-
-  const transporter = nodemailer.createTransport({
-    service: "yahoo", // Gmail ব্যবহার করলে "gmail" দাও
-    auth: {
-      user: "shark.agency@yahoo.com", // তোমার ইমেইল
-      pass: "BAYJID@123", // এখানে তোমার App Password দাও
-    },
-  });
-
-  const mailOptions = {
-    from: "shark.agency@yahoo.com",
-    to: "shark.agency@yahoo.com",
-    subject: "🦈 New Shark Form Submission",
-    html: `
-      <h3>New Form Submission</h3>
-      <p><b>Name:</b> ${name}</p>
-      <p><b>Age:</b> ${age}</p>
-      <p><b>Phone:</b> ${phone}</p>
-      <p><b>Email:</b> ${email}</p>
-      <p>Photo attached below 👇</p>
-    `,
-    attachments: photoPath
-      ? [{ filename: req.file.originalname, path: photoPath }]
-      : [],
-  };
+  let text = `🦈 New Shark Form Submission\nName: ${name}\nAge: ${age}\nPhone: ${phone}\nEmail: ${email}`;
 
   try {
-    await transporter.sendMail(mailOptions);
-    if (photoPath) fs.unlinkSync(photoPath);
-    res.send("✅ Successfully sent to Shark Gmail!");
-  } catch (error) {
-    console.error(error);
-    res.send("❌ Failed to send email: " + error.message);
+    if (req.file) {
+      // Photo থাকলে Telegram এ পাঠাও
+      const formData = new FormData();
+      formData.append("chat_id", CHAT_ID);
+      formData.append("photo", fs.createReadStream(req.file.path));
+      formData.append("caption", text);
+
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+        method: "POST",
+        body: formData,
+      });
+      fs.unlinkSync(req.file.path); // file remove
+    } else {
+      // Text-only
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: CHAT_ID, text }),
+      });
+    }
+
+    res.send("✅ Sent to Telegram successfully!");
+  } catch (err) {
+    console.error(err);
+    res.send("❌ Failed to send: " + err.message);
   }
 });
 
-app.listen(3000, () => console.log("🦈 Shark Form running at http://localhost:3000"));
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🦈 Shark Form running at http://localhost:3000");
+});
