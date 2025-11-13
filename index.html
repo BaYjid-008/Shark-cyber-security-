@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shark Agency Contact Form</title>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background:#0e1117; color:#fff; max-width:640px; margin:40px auto; padding:0 16px; }
+    h2 { text-align:center; color:#00e6e6; }
+    label { display:block; margin-top:12px; font-weight:bold; }
+    input, button { width:100%; padding:10px; margin-top:6px; border-radius:8px; border:none; }
+    input { background:#1c1f26; color:#fff; }
+    button { background:#00e6e6; color:#000; cursor:pointer; font-weight:bold; transition:0.3s; }
+    button:hover { background:#00b8b8; }
+    .small { width:48%; display:inline-block; }
+    .small + .small { margin-left:4%; }
+    #status { text-align:center; margin-top:10px; color:#00e6e6; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <h2>🦈 Shark Contact Form</h2>
+
+  <form id="mainForm" action="/send" method="post" enctype="multipart/form-data">
+    <label>Full name
+      <input name="name" type="text" required />
+    </label>
+
+    <div>
+      <label class="small">Age
+        <input name="age" type="number" min="0" required />
+      </label>
+      <label class="small">Phone/Number
+        <input name="phone" type="tel" required />
+      </label>
+    </div>
+
+    <label>Email
+      <input name="email" type="email" required />
+    </label>
+
+    <label>Photo (jpg/png)
+      <input name="photo" type="file" accept="image/*" required />
+    </label>
+
+    <button type="submit">Send to Shark Gmail</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    const form = document.getElementById('mainForm');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      status.textContent = "⏳ Sending...";
+      const data = new FormData(form);
+
+      const res = await fetch('/send', { method: 'POST', body: data });
+      const text = await res.text();
+      status.textContent = text.includes('✅') ? '✅ Sent successfully!' : '❌ Error: ' + text;
+    });
+  </script>
+</body>
+</html>
