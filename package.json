@@ -2,9 +2,9 @@
   "name": "shark-form",
   "version": "1.0.0",
   "description": "Shark Agency contact form to send submissions to Gmail",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
